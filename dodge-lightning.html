@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodge</title>
+    <style>
+        body {
+            margin: 100px 30px 0px;
+            overflow: hidden;
+            text-align: right;
+            font-family: Arial, sans-serif;
+        }
+
+        .target {
+            width: 50px;
+            height: 50px;
+            background-color: teal;
+            transition: 0.1s;
+            position: absolute;
+            bottom: 10vh;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .lightning {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            top: 0;
+        }
+
+        #timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="timer">Time: 0s</div>
+    <div class="target"></div>
+
+    <script>
+        const target = document.querySelector('.target');
+        const gameArea = document.body;
+        const timerElement = document.getElementById('timer');
+        let pos = 0;
+        let startTime;
+        let gameOver = false;
+
+        function checkCollision(rect1, rect2) {
+            return (
+                rect1.left < rect2.right &&
+                rect1.right > rect2.left &&
+                rect1.top < rect2.bottom &&
+                rect1.bottom > rect2.top
+            );
+        }
+
+        function move(event) {
+            if (gameOver) return;
+
+            const keyName = event.key;
+            const targetPos = target.getBoundingClientRect();
+
+            if (keyName === 'ArrowRight') {
+                if (!(targetPos.right + 10 > window.innerWidth)) {
+                    pos += 15;
+                    target.style.transform = `translate(${pos}px, -50%)`;
+                }
+            }
+
+            if (keyName === 'ArrowLeft') {
+                if (!(targetPos.left < 10)) {
+                    pos -= 15;
+                    target.style.transform = `translate(${pos}px, -50%)`;
+                }
+            }
+        }
+
+        function createLightning() {
+            if (gameOver) return;
+
+            const lightning = document.createElement('img');
+            lightning.src = 'lightning.jpg';
+            lightning.classList.add('lightning');
+            lightning.style.left = `${Math.random() * 90}vw`;
+            gameArea.appendChild(lightning);
+
+            moveLightning(lightning);
+        }
+
+        function moveLightning(lightning) {
+            let y = 0;
+
+            function fall() {
+                if (gameOver) {
+                    lightning.remove();
+                    return;
+                }
+
+                if (y < window.innerHeight) {
+                    y += 3;
+                    lightning.style.transform = `translateY(${y}px)`;
+                    
+                    const lightningRect = lightning.getBoundingClientRect();
+                    const targetRect = target.getBoundingClientRect();
+
+                    if (checkCollision(lightningRect, targetRect)) {
+                        gameOver = true;
+                        alert('게임 종료! 버틴 시간: ' + timerElement.textContent);
+                        return;
+                    }
+
+                    requestAnimationFrame(fall);
+                } else {
+                    lightning.remove();
+                }
+            }
+            fall();
+        }
+
+        function startGame() {
+            setInterval(createLightning, 1000);
+            document.addEventListener('keydown', move);
+            startTime = Date.now();
+            updateTimer();
+        }
+
+        function updateTimer() {
+            if (gameOver) return;
+
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            timerElement.textContent = `시간: ${elapsedTime}s`;
+            requestAnimationFrame(updateTimer);
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
